@@ -1,37 +1,70 @@
+// routes/weather.js
 import express from "express";
 import axios from "axios";
-import cors from "cors";
 
 const router = express.Router();
-router.use(cors()); // Allow cross-origin requests
+
+const WEATHER_API_BASE = "https://api.weatherapi.com/v1";
 
 router.get("/", async (req, res) => {
   const { location, days = 3 } = req.query;
-  if (!location) return res.status(400).json({ error: "Location is required" });
 
+  // 1) Validate input
+  if (!location) {
+    return res.status(400).json({ error: "Location is required" });
+  }
+
+  // 2) Ensure API key is configured
   const apiKey = process.env.WEATHER_API_KEY;
-  const daysNumber = Number(days);
+  if (!apiKey) {
+    console.error("Missing WEATHER_API_KEY in environment");
+    return res
+      .status(500)
+      .json({ error: "Server misconfigured: WEATHER_API_KEY is not set" });
+  }
+
+  // 3) Clamp days to sane range (WeatherAPI free tier == up to 3 days)
+  let forecastDays = Number(days) || 3;
+  if (forecastDays < 1) forecastDays = 1;
+  if (forecastDays > 3) forecastDays = 3;
 
   try {
-    const [currentResp, forecastResp, astronomyResp, alertsResp] = await Promise.all([
-      axios.get("http://api.weatherapi.com/v1/current.json", { params: { key: apiKey, q: location, aqi: "yes" } }),
-      axios.get("http://api.weatherapi.com/v1/forecast.json", { params: { key: apiKey, q: location, days: daysNumber } }),
-      axios.get("http://api.weatherapi.com/v1/astronomy.json", { params: { key: apiKey, q: location } }),
-      axios.get("http://api.weatherapi.com/v1/alerts.json", { params: { key: apiKey, q: location } }),
-    ]);
+    const baseParams = { key: apiKey, q: location };
 
-    // If location data is missing, return friendly error
-    if (!currentResp.data?.location || currentResp.data.location.lat === undefined) {
-      return res.status(404).json({ error: "Location not found. Try a bigger city or correct spelling." });
+    const [currentResp, forecastResp, astronomyResp, alertsResp] =
+      await Promise.all([
+        axios.get(`${WEATHER_API_BASE}/current.json`, {
+          params: { ...baseParams, aqi: "yes" },
+        }),
+        axios.get(`${WEATHER_API_BASE}/forecast.json`, {
+          params: { ...baseParams, days: forecastDays },
+        }),
+        axios.get(`${WEATHER_API_BASE}/astronomy.json`, {
+          params: baseParams,
+        }),
+        axios.get(`${WEATHER_API_BASE}/alerts.json`, {
+          params: baseParams,
+        }),
+      ]);
+
+    const loc = currentResp.data?.location;
+
+    // If location data is missing / invalid
+    if (!loc || loc.lat === undefined || loc.lon === undefined) {
+      return res.status(404).json({
+        error: "Location not found. Try a bigger city or check spelling.",
+      });
     }
 
-    const data = {
+    const payload = {
       location: {
-        name: currentResp.data.location.name,
-        region: currentResp.data.location.region,
-        country: currentResp.data.location.country,
-        lat: currentResp.data.location.lat,
-        lon: currentResp.data.location.lon,
+        name: loc.name,
+        region: loc.region,
+        country: loc.country,
+        lat: loc.lat,
+        lon: loc.lon,
+        tz_id: loc.tz_id,
+        localtime: loc.localtime,
       },
       current: currentResp.data.current,
       forecast: forecastResp.data.forecast,
@@ -39,12 +72,22 @@ router.get("/", async (req, res) => {
       alerts: alertsResp.data.alerts?.alert || [],
     };
 
-    res.json(data);
+    return res.json(payload);
   } catch (error) {
-    console.error("Weather API Error:", error.message, error.response?.data);
-    const status = error.response?.status || 500;
-    const message = error.response?.data?.error?.message || "Could not fetch weather data";
-    res.status(status).json({ error: message });
+    console.error("Weather API Error:", error.message);
+
+    if (error.response) {
+      console.error("Weather API response data:", error.response.data);
+      const status = error.response.status || 500;
+      const message =
+        error.response.data?.error?.message ||
+        "Could not fetch weather data from provider";
+      return res.status(status).json({ error: message });
+    }
+
+    return res
+      .status(500)
+      .json({ error: "Unexpected server error while fetching weather data" });
   }
 });
 
