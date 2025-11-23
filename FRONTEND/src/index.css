@@ -1,0 +1,129 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* =========================================================
+   Dark-Magic Weather/Astronomy App – Global Design System
+   Fonts: League Spartan (primary) | Khand (secondary)
+   ========================================================= */
+
+@import url('https://fonts.googleapis.com/css2?family=League+Spartan:wght@400;700&family=Khand:wght@400;600&display=swap');
+
+@layer base {
+  :root {
+    /* Core Palette */
+    --background: 215 25% 12%;
+    --foreground: 215 20% 92%;
+
+    /* Weather gradients */
+    --gradient-sunny: linear-gradient(135deg, #ff8c00, #ffb347);
+    --gradient-rainy: linear-gradient(135deg, #1e3c72, #2a5298);
+    --gradient-cloudy: linear-gradient(135deg, #434343, #000000);
+    --gradient-storm: linear-gradient(135deg, #232526, #414345);
+    --gradient-snow: linear-gradient(135deg, #d7d2cc, #304352);
+    --gradient-mist: linear-gradient(135deg, #606c88, #3f4c6b);
+    --gradient-night: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+
+    /* Weather colors */
+    --weather-sunny: #ffa500;
+    --weather-rainy: #1e90ff;
+    --weather-cloudy: #b0b0b0;
+    --weather-storm: #bb86fc;
+    --weather-snow: #ffffff;
+    --weather-mist: #a1c4fd;
+    --weather-night: #8ab4f8;
+    --weather-default: #e0e0e0;
+
+    /* Shadows */
+    --shadow-elevation: 0 4px 20px rgba(0, 0, 0, 0.45);
+    --shadow-glow: 0 0 18px rgba(59, 130, 246, 0.12);
+
+    /* Fonts */
+    --font-main: 'League Spartan', sans-serif;
+    --font-alt: 'Khand', sans-serif;
+  }
+
+  .dark {
+    --background: 215 25% 8%;
+    --foreground: 215 20% 95%;
+    --shadow-glow: 0 0 20px rgba(59, 130, 246, 0.1);
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+    font-family: var(--font-main);
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    min-height: 100vh;
+    background: hsl(var(--background));
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-alt);
+    letter-spacing: 0.02em;
+    text-shadow: 0 0 3px rgba(0, 255, 255, 0.25);
+  }
+}
+
+@layer utilities {
+  /* Weather backgrounds */
+  .bg-weather-sunny   { background: var(--gradient-sunny); }
+  .bg-weather-rainy   { background: var(--gradient-rainy); }
+  .bg-weather-cloudy  { background: var(--gradient-cloudy); }
+  .bg-weather-storm   { background: var(--gradient-storm); }
+  .bg-weather-snow    { background: var(--gradient-snow); }
+  .bg-weather-mist    { background: var(--gradient-mist); }
+  .bg-weather-night   { background: var(--gradient-night); }
+
+  /* Weather text colors */
+  .weather-sunny  { color: var(--weather-sunny); }
+  .weather-rainy  { color: var(--weather-rainy); }
+  .weather-cloudy { color: var(--weather-cloudy); }
+  .weather-storm  { color: var(--weather-storm); }
+  .weather-snow   { color: var(--weather-snow); }
+  .weather-mist   { color: var(--weather-mist); }
+  .weather-night  { color: var(--weather-night); }
+  .weather-default { color: var(--weather-default); }
+
+  /* Weather cards */
+  .weather-card {
+    @apply rounded-2xl p-6 border transition-all duration-500;
+    background: rgba(255, 255, 255, 0.02);
+    backdrop-filter: blur(12px);
+    box-shadow: var(--shadow-elevation), var(--shadow-glow);
+  }
+
+  .weather-card:hover {
+    transform: translateY(-4px) scale(1.03);
+    box-shadow: var(--shadow-elevation), 0 0 28px rgba(59, 130, 246, 0.2);
+  }
+
+  /* Map container */
+  .map-container {
+    @apply rounded-xl overflow-hidden;
+    box-shadow: var(--shadow-elevation), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  }
+
+  /* Animations */
+  .pulse-glow {
+    animation: pulseGlow 3s ease-in-out infinite;
+  }
+
+  .float-slow {
+    animation: floatSlow 6s ease-in-out infinite;
+  }
+
+  @keyframes pulseGlow {
+    0%, 100% { box-shadow: 0 0 12px rgba(0,255,255,0.25); }
+    50%      { box-shadow: 0 0 25px rgba(0,255,255,0.5); }
+  }
+
+  @keyframes floatSlow {
+    0%, 100% { transform: translateY(0); }
+    50%      { transform: translateY(-8px); }
+  }
+}
